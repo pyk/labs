@@ -1,0 +1,30 @@
+apiVersion: 1
+
+providers:
+  - name: 'Docker'
+    orgId: 1
+    folder: 'Docker'
+    type: file
+    disableDeletion: false
+    editable: true
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/docker
+  - name: 'Erigon'
+    orgId: 1
+    folder: 'Erigon'
+    type: file
+    disableDeletion: false
+    editable: true
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/erigon
+  - name: 'Lighthouse'
+    orgId: 1
+    folder: 'Lighthouse'
+    type: file
+    disableDeletion: false
+    editable: true
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/lighthouse

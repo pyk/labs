@@ -1,0 +1,6 @@
+# Ignore mainnet chain data
+erigon/mainnet/*
+!erigon/mainnet/.gitkeep
+lighthouse/mainnet/*
+!lighthouse/mainnet/.gitkeep
+jwtsecret

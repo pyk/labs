@@ -1,0 +1,146 @@
+# Volume to persist data without accessible from host
+volumes:
+  prometheus_data:
+    name: prometheus_data
+  grafana_data:
+    name: grarana_data
+
+services:
+  erigon-mainnet:
+    image: thorax/erigon:v2.30.0
+    container_name: erigon-mainnet
+    volumes:
+      - ./erigon/mainnet:/data
+      - ./jwtsecret:/jwtsecret:ro
+    command: |
+      erigon
+        --datadir=/data
+        --batchSize=1000M
+        --etl.bufferSize=1000Mb
+        --chain=mainnet
+        --snapshots=true
+        --port=30303
+        --http.port=8545
+        --torrent.port=42069
+        --metrics.port=6060
+        --authrpc.port=8551
+        --txpool.disable
+        --http.addr=0.0.0.0
+        --http.api="eth,erigon,debug,net,trace,web3"
+        --torrent.download.rate="30mb"
+        --chain=mainnet
+        --metrics
+        --metrics.addr=0.0.0.0
+        --watch-the-burn
+        --authrpc.jwtsecret=/jwtsecret
+        --ws
+        --authrpc.addr=0.0.0.0
+        --authrpc.vhosts=*
+        --externalcl
+    # expose ports to hosts
+    ports:
+      - 8545:8545
+      - 30303:30303/tcp
+      - 30303:30303/udp
+      - 42069:42069/tcp
+      - 42069:42069/udp
+    expose:
+      - 6060 # expose erigon-mainnet:6060 to prometheus
+      - 8551 # expose erigon-mainnet:8551 to lighthouse
+    restart: unless-stopped
+
+  lighthouse-mainnet:
+    image: sigp/lighthouse:latest-modern
+    container_name: lighthouse-mainnet
+    volumes:
+      - ./lighthouse/mainnet:/root/.lighthouse
+      - ./jwtsecret:/jwtsecret:ro
+    command: |
+      lighthouse bn
+        --network=mainnet
+        --http
+        --http-address=0.0.0.0
+        --http-port=5052
+        --execution-endpoint=http://erigon-mainnet:8551
+        --execution-jwt=/jwtsecret
+        --checkpoint-sync-url=https://mainnet.checkpoint.sigp.io
+        --disable-deposit-contract-sync
+        --metrics
+        --metrics-address=0.0.0.0
+        --metrics-allow-origin=*
+        --metrics-port=5054
+    ports:
+      - 9000:9000/tcp
+      - 9000:9000/udp
+      - 5052:5052
+    expose:
+      - 5054 # expose lighthouse-mainnet:5054 to prometheus
+    restart: unless-stopped
+    depends_on:
+      - erigon-mainnet
+
+  node-exporter:
+    image: prom/node-exporter:v1.5.0
+    container_name: node-exporter
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - '--path.rootfs=/host'
+    expose:
+      - 9100 # expose node-exporter:9100 to prometheus
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.46.0
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    privileged: true
+    expose:
+      - 8080
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.40.5
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+      - "--storage.tsdb.path=/prometheus"
+    # expose prometheus:9090 to grafana
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    depends_on:
+      - erigon-mainnet
+      - lighthouse-mainnet
+      - cadvisor
+      - node-exporter
+
+  grafana:
+    image: grafana/grafana-oss:9.3.1
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=grafana
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+      - GF_USERS_ALLOW_SIGN_UP=false
+    # expose ports to hosts
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
