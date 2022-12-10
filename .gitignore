@@ -4,3 +4,4 @@ erigon/mainnet/*
 lighthouse/mainnet/*
 !lighthouse/mainnet/.gitkeep
 jwtsecret
+*.tar

@@ -69,6 +69,7 @@ services:
         --metrics-address=0.0.0.0
         --metrics-allow-origin=*
         --metrics-port=5054
+        --reconstruct-historic-states
     ports:
       - 9000:9000/tcp
       - 9000:9000/udp
