@@ -7,7 +7,7 @@ volumes:
 
 services:
   erigon-mainnet:
-    image: thorax/erigon:v2.30.0
+    image: thorax/erigon:v2.31.0
     container_name: erigon-mainnet
     volumes:
       - ./erigon/mainnet:/data
@@ -15,8 +15,6 @@ services:
     command: |
       erigon
         --datadir=/data
-        --batchSize=1000M
-        --etl.bufferSize=1000Mb
         --chain=mainnet
         --snapshots=true
         --port=30303
