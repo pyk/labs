@@ -37,12 +37,11 @@ services:
         --authrpc.addr=0.0.0.0
         --authrpc.vhosts=*
         --externalcl
-    # expose ports to hosts
     ports:
-      - 8545:8545
-      - 30303:30303/tcp
+      - 8545:8545  # expose localhost:8545
+      - 30303:30303/tcp # expose localhost:30303
       - 30303:30303/udp
-      - 42069:42069/tcp
+      - 42069:42069/tcp # expose localhost:42069
       - 42069:42069/udp
     expose:
       - 6060 # expose erigon-mainnet:6060 to prometheus
@@ -118,9 +117,8 @@ services:
       - "--storage.tsdb.retention.time=200h"
       - "--web.enable-lifecycle"
       - "--storage.tsdb.path=/prometheus"
-    # expose prometheus:9090 to grafana
     ports:
-      - 9090:9090
+      - 9090:9090 # expose localhost:9090 and promtheus:9090 to grafana
     restart: unless-stopped
     depends_on:
       - erigon-mainnet
@@ -139,9 +137,8 @@ services:
       - GF_SECURITY_ADMIN_USER=grafana
       - GF_SECURITY_ADMIN_PASSWORD=grafana
       - GF_USERS_ALLOW_SIGN_UP=false
-    # expose ports to hosts
     ports:
-      - "3000:3000"
+      - "3000:3000" # expose localhost:3000
     depends_on:
       - prometheus
 
