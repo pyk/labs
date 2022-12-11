@@ -7,7 +7,7 @@ volumes:
 
 services:
   erigon-mainnet:
-    image: thorax/erigon:v2.31.0
+    image: thorax/erigon:v2.30.0
     container_name: erigon-mainnet
     volumes:
       - ./erigon/mainnet:/data
@@ -60,13 +60,14 @@ services:
         --http-port=5052
         --execution-endpoint=http://erigon-mainnet:8551
         --execution-jwt=/jwtsecret
-        --checkpoint-sync-url=https://mainnet.checkpoint.sigp.io
+        --checkpoint-sync-url=https://beaconstate.ethstaker.cc
         --disable-deposit-contract-sync
         --metrics
         --metrics-address=0.0.0.0
         --metrics-allow-origin=*
         --metrics-port=5054
         --reconstruct-historic-states
+        --slots-per-restore-point 32
     ports:
       - 9000:9000/tcp
       - 9000:9000/udp
