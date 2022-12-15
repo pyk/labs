@@ -6,9 +6,9 @@ volumes:
     name: grarana_data
 
 services:
-  erigon-mainnet:
+  mainnet-execution:
     image: thorax/erigon:v2.30.0
-    container_name: erigon-mainnet
+    container_name: mainnet-execution
     volumes:
       - ./erigon/mainnet:/data
       - ./jwtsecret:/jwtsecret:ro
@@ -42,13 +42,13 @@ services:
       - 42069:42069/tcp # expose localhost:42069
       - 42069:42069/udp
     expose:
-      - 6060 # expose erigon-mainnet:6060 to prometheus
-      - 8551 # expose erigon-mainnet:8551 to lighthouse
+      - 6060 # expose mainnet-execution:6060 to prometheus
+      - 8551 # expose mainnet-execution:8551 to lighthouse
     restart: unless-stopped
 
-  lighthouse-mainnet:
+  mainnet-beacon:
     image: sigp/lighthouse:latest-modern
-    container_name: lighthouse-mainnet
+    container_name: mainnet-beacon
     volumes:
       - ./lighthouse/mainnet:/root/.lighthouse
       - ./jwtsecret:/jwtsecret:ro
@@ -58,7 +58,7 @@ services:
         --http
         --http-address=0.0.0.0
         --http-port=5052
-        --execution-endpoint=http://erigon-mainnet:8551
+        --execution-endpoint=http://mainnet-execution:8551
         --execution-jwt=/jwtsecret
         --checkpoint-sync-url=https://beaconstate.ethstaker.cc
         --disable-deposit-contract-sync
@@ -71,14 +71,14 @@ services:
       - 9000:9000/udp
       - 5052:5052
     expose:
-      - 5054 # expose lighthouse-mainnet:5054 to prometheus
+      - 5054 # expose mainnet-beacon:5054 to prometheus
     restart: unless-stopped
     depends_on:
-      - erigon-mainnet
+      - mainnet-execution
 
-  gnosis-nethermind:
+  gnosis-execution:
     image: nethermind/nethermind:latest
-    container_name: gnosis-nethermind
+    container_name: gnosis-execution
     volumes:
       - ./gnosis/execution:/data
       - ./jwtsecret:/jwtsecret
@@ -105,14 +105,14 @@ services:
       - 30304:30304/tcp # p2p
       - 30304:30304/udp # p2p
     expose:
-      - 8546 # gnosis-nethermind:8546
-      - 8552 # gnosis-nethermind:8552 for beacon and validator
+      - 8546 # gnosis-execution:8546
+      - 8552 # gnosis-execution:8552 for beacon and validator
     restart: unless-stopped
     stop_grace_period: 2m
 
-  gnosis-lighthouse-beacon:
+  gnosis-beacon:
     image: sigp/lighthouse:latest-modern
-    container_name: gnosis-lighthouse-beacon
+    container_name: gnosis-beacon
     volumes:
       - ./gnosis/consensus:/data
       - ./jwtsecret:/jwtsecret
@@ -128,7 +128,7 @@ services:
         --http-address=0.0.0.0
         --http-port=4000
         --target-peers=50
-        --execution-endpoint=http://gnosis-nethermind:8552
+        --execution-endpoint=http://gnosis-execution:8552
         --execution-jwt=/jwtsecret
         --debug-level=info
         --validator-monitor-auto
@@ -143,16 +143,16 @@ services:
       - 9001:9001/tcp # p2p
       - 9001:9001/udp # p2p
     expose:
-      - 4000 # expose gnosis-lighthouse-beacon:4000 to validator
-      - 5055 # expose gnosis-lighthouse-beacon:5055 to prometheus
+      - 4000 # expose gnosis-beacon:4000 to validator
+      - 5055 # expose gnosis-beacon:5055 to prometheus
     restart: unless-stopped
     stop_grace_period: 2m
     depends_on:
-      - gnosis-nethermind
+      - gnosis-execution
 
-  gnosis-lighthouse-validator:
+  gnosis-validators:
     image: sigp/lighthouse:latest-modern
-    container_name: gnosis-lighthouse-validator
+    container_name: gnosis-validators
     volumes:
       - ./gnosis/consensus/validators:/data/validators
       - /etc/timezone:/etc/timezone:ro
@@ -161,20 +161,20 @@ services:
       lighthouse vc
         --network=gnosis
         --datadir=/data
-        --beacon-nodes=http://gnosis-lighthouse-beacon:4000
-        --graffiti=gm
+        --beacon-nodes=http://gnosis-beacon:4000
+        --graffiti="pyk.sh"
         --debug-level=info
         --suggested-fee-recipient=0x17ae0a6BE2e97b384165626dB2569729d5006640
         --metrics
         --metrics-address=0.0.0.0
         --metrics-port=5064
     expose:
-      - 5064 # expose gnosis-lighthouse-validator:5064 to prometheus
+      - 5064 # expose gnosis-validators:5064 to prometheus
     restart: unless-stopped
     stop_grace_period: 2m
     depends_on:
-      - gnosis-nethermind
-      - gnosis-lighthouse-beacon
+      - gnosis-execution
+      - gnosis-beacon
 
   node-exporter:
     image: prom/node-exporter:v1.5.0
@@ -218,12 +218,12 @@ services:
       - 9090:9090 # expose localhost:9090 and promtheus:9090 to grafana
     restart: unless-stopped
     depends_on:
-      - erigon-mainnet
-      - lighthouse-mainnet
+      - mainnet-execution
+      - mainnet-beacon
       - cadvisor
       - node-exporter
-      - gnosis-lighthouse-beacon
-      - gnosis-lighthouse-validator
+      - gnosis-beacon
+      - gnosis-validators
 
   grafana:
     image: grafana/grafana-oss:9.3.1
