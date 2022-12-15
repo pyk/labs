@@ -72,3 +72,8 @@ docker compose logs -f --tail 10 gnosis-validators
 Wait the chain sync for ~24hours, then follow the [Validator Deposit](https://docs.gnosischain.com/node/guide/validator/deposit) guide.
 
 Reminder to my futureself: Currently I have 32 validators running in Gnosis Chain.
+
+
+### Lesson Learned
+
+- Wait Execution & Consensus nodes to 100% sync before starting a validator. Otherwise you will miss a lot of attestations.
