@@ -5,3 +5,11 @@ lighthouse/mainnet/*
 !lighthouse/mainnet/.gitkeep
 jwtsecret
 *.tar
+
+# Ignore gnosis files
+gnosis/execution/*
+gnosis/consensus/*
+gnosis/validator/*
+!gnosis/execution/.gitkeep
+!gnosis/consensus/.gitkeep
+!gnosis/validator/.gitkeep

@@ -21,8 +21,13 @@ scrape_configs:
     static_configs:
       - targets: ["erigon-mainnet:6060"]
 
-  - job_name: "lighthouse-mainnet"
+  - job_name: "lighthouse"
     scrape_interval: 5s
     static_configs:
       - targets: ["lighthouse-mainnet:5054"]
+
+  - job_name: "gnosis-lighthouse"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["gnosis-lighthouse-beacon:5055", "gnosis-lighthouse-validator:5064"]
 
