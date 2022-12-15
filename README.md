@@ -4,6 +4,7 @@ This is my home labs running the following services:
 
 1. Ethereum Archive Node (Erigon+Lighthouse)
 2. Gnosis Chain Validators (Nethermind+Lighthouse)
+3. Goerli Full Node (Erigon+Lighthouse)
 3. Monitoring tools (Prometheus+Grafana)
 
 ### Setup

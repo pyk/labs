@@ -19,7 +19,9 @@ scrape_configs:
     scheme: http
     scrape_interval: 5s
     static_configs:
-      - targets: ["mainnet-execution:6060"]
+      - targets:
+        - "mainnet-execution:6060"
+        - "goerli-execution:6060"
 
   - job_name: "beacon-nodes"
     scrape_interval: 5s
@@ -28,4 +30,5 @@ scrape_configs:
         - "mainnet-beacon:5054"
         - "gnosis-beacon:5055"
         - "gnosis-validators:5064"
+        - "goerli-beacon:5054"
 

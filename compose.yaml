@@ -26,7 +26,6 @@ services:
         --http.addr=0.0.0.0
         --http.api="eth,erigon,debug,net,trace,web3"
         --torrent.download.rate="30mb"
-        --chain=mainnet
         --metrics
         --metrics.addr=0.0.0.0
         --watch-the-burn
@@ -175,6 +174,90 @@ services:
       - gnosis-execution
       - gnosis-beacon
 
+  goerli-execution:
+    image: thorax/erigon:v2.30.0
+    container_name: goerli-execution
+    volumes:
+      - ./goerli/execution:/data
+      - ./jwtsecret:/jwtsecret:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: |
+      erigon
+        --datadir=/data
+        --chain=goerli
+        --snapshots=true
+        --port=30305
+        --http.port=8546
+        --torrent.port=42068
+        --metrics.port=6060
+        --authrpc.port=8551
+        --txpool.disable
+        --http.addr=0.0.0.0
+        --http.api="eth,erigon,debug,net,trace,web3"
+        --torrent.download.rate="30mb"
+        --metrics
+        --metrics.addr=0.0.0.0
+        --authrpc.jwtsecret=/jwtsecret
+        --ws
+        --authrpc.addr=0.0.0.0
+        --authrpc.vhosts=*
+        --externalcl
+        --prune.r.before=4367322
+        --prune htc
+    ports:
+      - 8546:8546  # expose localhost:8546
+      - 30305:30305/tcp # expose localhost:30305
+      - 30305:30305/udp
+      - 42068:42068/tcp # expose localhost:42068
+      - 42068:42068/udp
+    expose:
+      - 6060 # expose goerli-execution:6060 to prometheus
+      - 8551 # expose goerli-execution:8551 to lighthouse
+    restart: unless-stopped
+    stop_grace_period: 2m
+
+  goerli-beacon:
+    image: sigp/lighthouse:latest-modern
+    container_name: goerli-beacon
+    volumes:
+      - ./goerli/consensus:/data
+      - ./jwtsecret:/jwtsecret:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: |
+      lighthouse bn
+        --network=goerli
+        --disable-upnp
+        --datadir=/data
+        --port=9002
+        --http
+        --http-address=0.0.0.0
+        --http-port=5053
+        --target-peers=50
+        --execution-endpoint=http://goerli-execution:8551
+        --execution-jwt=/jwtsecret
+        --debug-level=info
+        --validator-monitor-auto
+        --subscribe-all-subnets
+        --import-all-attestations
+        --metrics
+        --metrics-address=0.0.0.0
+        --metrics-allow-origin=*
+        --metrics-port=5054
+        --checkpoint-sync-url=https://goerli.checkpoint-sync.ethpandaops.io
+    ports:
+      - 9002:9002/tcp # p2p
+      - 9002:9002/udp # p2p
+      - 5053:5053
+    expose:
+      - 5054 # expose goerli-beacon:5054 to prometheus
+    restart: unless-stopped
+    stop_grace_period: 2m
+    depends_on:
+      - goerli-execution
+
+  # Non chains
   node-exporter:
     image: prom/node-exporter:v1.5.0
     container_name: node-exporter
@@ -221,8 +304,11 @@ services:
       - mainnet-beacon
       - cadvisor
       - node-exporter
+      - gnosis-execution
       - gnosis-beacon
       - gnosis-validators
+      - goerli-execution
+      - goerli-beacon
 
   grafana:
     image: grafana/grafana-oss:9.3.1

@@ -13,3 +13,11 @@ gnosis/validator/*
 !gnosis/execution/.gitkeep
 !gnosis/consensus/.gitkeep
 !gnosis/validator/.gitkeep
+
+# Ignore goerli
+goerli/execution/*
+goerli/consensus/*
+goerli/validator/*
+!goerli/execution/.gitkeep
+!goerli/consensus/.gitkeep
+!goerli/validator/.gitkeep
