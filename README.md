@@ -36,20 +36,6 @@ Copy the files `keystore*` files to [./gnosis/validator/](./gnosis/validator).
 
 Add your password that you use to generate the keys to `./gnosis/validator/password.txt`.
 
-Then import the keys using the following command:
-
-```sh
-docker run \
-  --rm \
-  --volume /home/pyk/labs/gnosis/validator:/keystores \
-  --volume /home/pyk/labs/gnosis/consensus:/data sigp/lighthouse:latest-modern lighthouse account validator import \
-  --network gnosis \
-  --password-file /keystores/password.txt \
-  --reuse-password \
-  --directory /keystores \
-  --datadir /data
-```
-
 You may need to stop the existing validators service first:
 
 ```
@@ -66,7 +52,7 @@ Check logs:
 
 ```sh
 docker compose logs -f --tail 10 gnosis-execution
-docker compose logs -f --tail 10 gnosis-beacon
+docker compose logs -f --tail 10 gnosis-beacon-1
 docker compose logs -f --tail 10 gnosis-validators
 ```
 
@@ -78,3 +64,34 @@ Reminder to my futureself: Currently I have 32 validators running in Gnosis Chai
 ### Lesson Learned
 
 - Wait Execution & Consensus nodes to 100% sync before starting a validator. Otherwise you will miss a lot of attestations.
+- Run multiple beacon nodes! So all validators can attest in time.
+
+
+## Import & Export Interchange
+
+
+Export
+
+```sh
+docker run \
+  --rm \
+  --volume /home/pyk/labs/gnosis/validator:/keystores \
+  --volume /home/pyk/labs/gnosis/consensus:/data \
+  sigp/lighthouse:latest-modern \
+  lighthouse account validator slashing-protection export /data/gnosis_interchange.json  \
+  --network gnosis \
+  --datadir /data
+```
+
+Import
+
+```sh
+docker run \
+  --rm \
+  --volume gnosis_validators_data:/data \
+  --volume /home/pyk/labs/gnosis/consensus/gnosis_interchange.json:/gnosis_interchange.json \
+  chainsafe/lodestar:v1.2.2 \
+  validator slashing-protection import --file /gnosis_interchange.json \
+  --network=gnosis \
+  --dataDir=/data
+```

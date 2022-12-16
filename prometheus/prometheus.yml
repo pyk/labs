@@ -28,7 +28,11 @@ scrape_configs:
     static_configs:
       - targets:
         - "mainnet-beacon:5054"
-        - "gnosis-beacon:5055"
+        - "gnosis-beacon-1:5055"
+        - "gnosis-beacon-2:5055"
+        - "gnosis-beacon-3:5055"
+        - "gnosis-beacon-4:5055"
+        - "gnosis-beacon-5:5055"
         - "gnosis-validators:5064"
         - "goerli-beacon:5054"
 
