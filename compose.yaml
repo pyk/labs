@@ -7,6 +7,10 @@ volumes:
   gnosis_backup_data:
     name: gnosis_backup_data
 
+  # Volumes for mainnet beacon node
+  mainnet_beacon_data:
+    name: mainnet_beacon_data
+
   # Volumes for gnosis beacon nodes
   gnosis_beacon_1_data:
     name: gnosis_beacon_1_data
@@ -88,6 +92,7 @@ services:
         --snapshots=true
         --port=30303
         --http.port=8545
+        --http.vhosts=*
         --torrent.port=42069
         --metrics.port=6060
         --authrpc.port=8551
@@ -111,32 +116,40 @@ services:
       - 42069:42069/udp
     expose:
       - 6060 # expose mainnet-execution:6060 to prometheus
-      - 8551 # expose mainnet-execution:8551 to lighthouse
+      - 8551 # expose mainnet-execution:8551 to lodestar
+      - 8545 # expose mainnet-execution:8545 to lodestar
     restart: unless-stopped
 
   mainnet-beacon:
-    image: sigp/lighthouse:latest-modern
+    image: chainsafe/lodestar:v1.2.2
+    environment:
+      NODE_OPTIONS: --max_old_space_size=6144
     container_name: mainnet-beacon
     volumes:
-      - ./lighthouse/mainnet:/root/.lighthouse
-      - ./jwtsecret:/jwtsecret:ro
+      - mainnet_beacon_data:/data
+      - ./jwtsecret:/jwtsecret
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     command: |
-      lighthouse bn
+      beacon
         --network=mainnet
-        --http
-        --http-address=0.0.0.0
-        --http-port=5052
-        --execution-endpoint=http://mainnet-execution:8551
-        --execution-jwt=/jwtsecret
-        --checkpoint-sync-url=https://beaconstate.ethstaker.cc
-        --disable-deposit-contract-sync
-        --metrics
-        --metrics-address=0.0.0.0
-        --metrics-allow-origin=*
-        --metrics-port=5054
+        --dataDir=/data
+        --eth1=true
+        --eth1.providerUrls=http://mainnet-execution:8545
+        --execution.urls=http://mainnet-execution:8551
+        --logFileLevel=info
+        --port=9000
+        --rest=true
+        --rest.address=0.0.0.0
+        --rest.port=5052
+        --rest.cors=*
+        --discv5=true
+        --targetPeers=50
+        --metrics=true
+        --metrics.port=5054
+        --jwt-secret=/jwtsecret
+        --checkpointSyncUrl=https://beaconstate-mainnet.chainsafe.io
     ports:
-      - 9000:9000/tcp
-      - 9000:9000/udp
       - 5052:5052
     expose:
       - 5054 # expose mainnet-beacon:5054 to prometheus
